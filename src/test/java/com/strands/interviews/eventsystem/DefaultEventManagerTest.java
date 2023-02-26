@@ -109,4 +109,26 @@ public class DefaultEventManagerTest
         {
         }
     }
+    
+    @Test
+    public void testSubEventDoesNotNotifySimpleEventListeners()
+    {
+    	
+    	// Create a SimpleEvent listener
+    	EventListenerMock simpleEventListenerMock = new EventListenerMock(new Class[]{SimpleEvent.class});
+        eventManager.registerListener("some.key", simpleEventListenerMock);
+        
+
+        // Create a SubEvent listener
+        EventListenerMock subEventListenerMock = new EventListenerMock(new Class[]{SubEvent.class});
+        eventManager.registerListener("some.key", subEventListenerMock);
+        
+
+        // Create and send a SubEvent
+        eventManager.publishEvent(new SubEvent(this));
+
+        // Verify that only the SubEvent listener was called
+        assertTrue(subEventListenerMock.isCalled());
+        assertFalse(simpleEventListenerMock.isCalled());
+    }
 }
