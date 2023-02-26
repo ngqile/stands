@@ -19,7 +19,8 @@ public class DefaultEventManager implements EventManager
     private Map listeners = new HashMap();
     private Map listenersByClass = new HashMap();
     private List<InterviewEventListener> allEventListeners = new ArrayList<>();
-
+    private Map<Class<? extends InterviewEvent>, List<InterviewEventListener>> listenersMap;
+ 
     public void publishEvent(InterviewEvent event)
     {
         if (event == null)
@@ -36,27 +37,37 @@ public class DefaultEventManager implements EventManager
         return (Collection) listenersByClass.get(eventClass);
     }
 
-    public void registerListener(String listenerKey, InterviewEventListener listener)
-    {
-        if (listenerKey == null || listenerKey.equals(""))
-            throw new IllegalArgumentException("Key for the listener must not be null: " + listenerKey);
+
+    public void registerListener(String listenerKey, InterviewEventListener listener) {
+        if (listenerKey == null || listenerKey.isEmpty())
+            throw new IllegalArgumentException("Key for the listener must not be null or empty");
 
         if (listener == null)
-            throw new IllegalArgumentException("The listener must not be null: " + listener);
+            throw new IllegalArgumentException("The listener must not be null");
 
         if (listeners.containsKey(listenerKey))
             unregisterListener(listenerKey);
 
-        Class[] classes = listener.getHandledEventClasses();
+        listeners.put(listenerKey, listener);
 
-        if (classes.length == 0) {
-            allEventListeners.add(listener);
-        } else {
-            for (int i = 0; i < classes.length; i++)
-                addToListenerList(classes[i], listener);
+        // Find all existing listeners that handle a superclass of the new listener's classes
+        for (InterviewEventListener existingListener : listeners.values()) {
+            Class<?>[] existingClasses = existingListener.getHandledEventClasses();
+            Class<?>[] newClasses = listener.getHandledEventClasses();
+
+            for (Class<?> existingClass : existingClasses) {
+                for (Class<?> newClass : newClasses) {
+                    if (existingClass.isAssignableFrom(newClass)) {
+                        addToListenerList(existingClass, listener);
+                    }
+                }
+            }
         }
 
-        listeners.put(listenerKey, listener);
+        // Add the new listener to the appropriate listener list for each of its classes
+        for (Class<?> clazz : listener.getHandledEventClasses()) {
+            addToListenerList(clazz, listener);
+        }
     }
 
     public void unregisterListener(String listenerKey)
@@ -101,6 +112,21 @@ public class DefaultEventManager implements EventManager
         for (InterviewEventListener listener : allEventListeners) {
             listener.handleEvent(event);
         }
+    }
+    
+    @Override
+    public List<InterviewEventListener> getListenersForEvent(Class<? extends InterviewEvent> eventClass) {
+        // return the list of listeners for the event class and its superclasses
+        List<InterviewEventListener> listeners = new ArrayList<>();
+        Class<?> clazz = eventClass;
+        while (clazz != null) {
+            List<InterviewEventListener> listenersForClass = listenersMap.get(clazz);
+            if (listenersForClass != null) {
+                listeners.addAll(listenersForClass);
+            }
+            clazz = clazz.getSuperclass();
+        }
+        return listeners;
     }
     
 }

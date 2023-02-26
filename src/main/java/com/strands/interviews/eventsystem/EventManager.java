@@ -1,5 +1,7 @@
 package com.strands.interviews.eventsystem;
 
+import java.util.List;
+
 public interface EventManager
 {
     /**
@@ -27,5 +29,6 @@ public interface EventManager
      * @param listenerKey the key under which the listener was registered.
      */
     void unregisterListener(String listenerKey);
-  
+    
+    List<InterviewEventListener> getListenersForEvent(Class<? extends InterviewEvent> eventClass);
 }

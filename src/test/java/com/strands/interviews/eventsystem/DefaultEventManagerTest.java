@@ -135,5 +135,29 @@ public class DefaultEventManagerTest
         assertFalse(simpleEventListenerMock.isCalled());
     }
     
-    
+    @Test
+    public void testAggregateListeners() {
+
+        EventListenerMock listenerMock = new EventListenerMock(new Class[] {SimpleEvent.class});
+        EventListenerMock subListenerMock = new EventListenerMock(new Class[] {SubEvent.class});
+
+        eventManager.registerListener("simple", listenerMock);
+        eventManager.registerListener("sub", subListenerMock);
+
+        SimpleEvent simpleEvent = new SimpleEvent(this);
+        eventManager.publishEvent(simpleEvent);
+        assertTrue(listenerMock.isCalled());
+        assertTrue(subListenerMock.isCalled());
+
+        listenerMock.resetCalled();
+        subListenerMock.resetCalled();
+
+        SubEvent subEvent = new SubEvent(this);
+        eventManager.publishEvent(subEvent);
+        assertFalse(listenerMock.isCalled()); // SimpleEvent listener should not be called
+        assertTrue(subListenerMock.isCalled());
+
+        eventManager.unregisterListener("simple");
+        eventManager.unregisterListener("sub");
+    }
 }
