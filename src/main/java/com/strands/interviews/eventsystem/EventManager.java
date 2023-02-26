@@ -1,7 +1,5 @@
 package com.strands.interviews.eventsystem;
 
-import com.strands.interviews.eventsystem.events.SubEvent;
-
 public interface EventManager
 {
     /**

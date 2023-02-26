@@ -18,6 +18,7 @@ public class DefaultEventManager implements EventManager
 {
     private Map listeners = new HashMap();
     private Map listenersByClass = new HashMap();
+    private List<InterviewEventListener> allEventListeners = new ArrayList<>();
 
     public void publishEvent(InterviewEvent event)
     {
@@ -48,8 +49,12 @@ public class DefaultEventManager implements EventManager
 
         Class[] classes = listener.getHandledEventClasses();
 
-        for (int i = 0; i < classes.length; i++)
-            addToListenerList(classes[i], listener);
+        if (classes.length == 0) {
+            allEventListeners.add(listener);
+        } else {
+            for (int i = 0; i < classes.length; i++)
+                addToListenerList(classes[i], listener);
+        }
 
         listeners.put(listenerKey, listener);
     }
@@ -91,4 +96,11 @@ public class DefaultEventManager implements EventManager
     {
         return listeners;
     }
+    
+    private void handleAllEvents(InterviewEvent event) {
+        for (InterviewEventListener listener : allEventListeners) {
+            listener.handleEvent(event);
+        }
+    }
+    
 }
